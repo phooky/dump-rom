@@ -8,6 +8,10 @@ fn default_port_name() -> &'static str {
 }
 
 mod dumper;
+mod promdate;
+
+use dumper::Dumper;
+use promdate::Promdate;
 
 fn main() {
     let opts = App::new("ROM dump helper")
@@ -37,6 +41,20 @@ fn main() {
     };
 
     let serial = serial::open(portname).expect("Couldn't open serial port!");
-    
+
     println!("Portname is {}, port is open!",portname);
+    let dumper = Promdate::new(serial);
+    
+    println!("Present: {}", dumper.is_present().unwrap());
+
+    for cd in dumper.list_supported().unwrap() {
+        println!("Supported: {}", cd.name);
+    }
+
+    match dumper.selected_chip() {
+        Ok(None) => println!("No chip selected."),
+        Ok(Some(c)) => println!("{} selected.",c.name),
+        Err(_) => println!("sad problems"),
+    }
+
 }
