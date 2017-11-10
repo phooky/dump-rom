@@ -124,7 +124,18 @@ impl<P : SerialPort> Dumper for Promdate<P> {
     }
     
     fn set_selected_chip(&mut self,chip:&ChipDesc) -> Result<(),DumperError> {
-        Ok(())
+        self.flush_input();
+        let ref mut serial = self.internals.borrow_mut().serial;
+        serial.write(format!("m{}\n",chip.key).as_bytes());
+        serial.flush();
+        let mut v = Vec::new();
+        serial.read_to_end(&mut v);
+        let rsp = String::from_utf8(v).unwrap();
+
+        for line in rsp.split("\n") {
+            if line.trim().starts_with("***") { return Ok(()) }
+        }
+        Err(DumperError::UnrecognizedChip(format!("{}/{}",rsp,chip.name.clone())))
     }
 }
     

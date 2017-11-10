@@ -43,12 +43,17 @@ fn main() {
     let serial = serial::open(portname).expect("Couldn't open serial port!");
 
     println!("Portname is {}, port is open!",portname);
-    let dumper = Promdate::new(serial);
+    let mut dumper = Promdate::new(serial);
     
     println!("Present: {}", dumper.is_present().unwrap());
 
     for cd in dumper.list_supported().unwrap() {
         println!("Supported: {}", cd.name);
+    }
+
+    match opts.value_of("chip") {
+        None => (),
+        Some(name) => dumper.select_chip_by_name(name).unwrap(),
     }
 
     match dumper.selected_chip() {
