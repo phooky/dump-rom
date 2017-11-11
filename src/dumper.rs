@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::vec::Vec;
+use std::io::Write;
 
 #[derive(Debug,Clone)]
 pub enum DumperError {
@@ -18,6 +19,8 @@ pub trait Dumper {
     fn list_supported(&self) -> Result<Vec<ChipDesc>,DumperError>;
     fn selected_chip(&self) -> Result<Option<ChipDesc>,DumperError>;
     fn set_selected_chip(&mut self,chip:&ChipDesc) -> Result<(),DumperError>;
+    fn dump_chip(&mut self, outstream : &mut Write) -> Result<usize,DumperError>;
+    
     fn select_chip_by_name(&mut self, name:&str) -> Result<(),DumperError> {
         let list = try!(self.list_supported());
         let mut candidate : Option<ChipDesc> = None;

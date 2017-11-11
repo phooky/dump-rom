@@ -5,7 +5,9 @@ authors = ["Adam Mayer <phooky@gmail.com>"]
 
 [dependencies]
 # xmodem = "0.1.3"
-xmodem = { git = "https://github.com/nycresistor/xmodem.rs" }
+# xmodem = { git = "https://github.com/nycresistor/xmodem.rs" }
+xmodem = { path = "../../nycresistor/xmodem.rs" }
 serial = "0.4.0"
 clap = "2.26.0"
 # conrod = "0.56.0"
+env_logger = "^0.3"

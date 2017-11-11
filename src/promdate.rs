@@ -3,6 +3,8 @@ use std::cell::RefCell;
 use serial::SerialPort;
 use std::time::Duration;
 use std::str::from_utf8;
+use xmodem::{Xmodem,Checksum};
+use std::io::Write;
 
 /// Interface for the "promdate" teensy2++ based ROM dumper.
 pub struct Promdate<P : SerialPort> {
@@ -137,5 +139,18 @@ impl<P : SerialPort> Dumper for Promdate<P> {
         }
         Err(DumperError::UnrecognizedChip(format!("{}/{}",rsp,chip.name.clone())))
     }
+
+    fn dump_chip(&mut self, outstream : &mut Write) -> Result<usize,DumperError> {
+        let mut xm = Xmodem::new();
+        let ref mut serial = self.internals.borrow_mut().serial;
+        serial.set_timeout(Duration::new(2,0));
+        match xm.recv(serial,outstream,Checksum::Standard) {
+            Ok(()) => (),
+            Err(x) => { println!("ERROR {:?}",x); }
+        }
+        serial.set_timeout(Duration::from_millis(10));
+        Ok((0))
+    }
+
 }
     

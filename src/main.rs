@@ -1,5 +1,7 @@
 extern crate clap;
 extern crate serial;
+extern crate xmodem;
+extern crate env_logger;
 
 use clap::{Arg,App};
 
@@ -13,7 +15,10 @@ mod promdate;
 use dumper::Dumper;
 use promdate::Promdate;
 
+use serial::SerialPort;
+
 fn main() {
+    env_logger::init();
     let opts = App::new("ROM dump helper")
         .version("0.1")
         .author("phooky@gmail.com")
@@ -39,17 +44,22 @@ fn main() {
         Some(x) => x,
         None => default_port_name(),
     };
+    
+    let mut serial = serial::open(portname).expect("Couldn't open serial port!");
 
-    let serial = serial::open(portname).expect("Couldn't open serial port!");
+    const SETTINGS: serial::PortSettings = serial::PortSettings {
+        baud_rate:    serial::Baud9600,
+        char_size:    serial::Bits8,
+        parity:       serial::ParityNone,
+        stop_bits:    serial::Stop1,
+        flow_control: serial::FlowNone,
+    };
+    serial.configure(&SETTINGS);
 
     println!("Portname is {}, port is open!",portname);
     let mut dumper = Promdate::new(serial);
     
     println!("Present: {}", dumper.is_present().unwrap());
-
-    for cd in dumper.list_supported().unwrap() {
-        println!("Supported: {}", cd.name);
-    }
 
     match opts.value_of("chip") {
         None => (),
@@ -61,5 +71,16 @@ fn main() {
         Ok(Some(c)) => println!("{} selected.",c.name),
         Err(_) => println!("sad problems"),
     }
-
+    match opts.value_of("out_path") {
+        None => {
+            println!("dumping to stdout");
+            let mut o = std::io::stdout();
+            dumper.dump_chip(&mut o);
+        },
+        Some(path) => {
+            println!("Dumping to {}",path);
+            let mut file = std::fs::File::create(path).unwrap();
+            dumper.dump_chip(&mut file);
+        }
+    }
 }
